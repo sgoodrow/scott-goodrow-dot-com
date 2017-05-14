@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>ccr.py</title>
+	<title>ccr_tools.py</title>
 	
 	<link rel="stylesheet" href="highlightjs/styles/github.css">
 	
@@ -24,10 +24,8 @@ import math
 import cmath
 import copy	as cp
 import numpy 	as np
-import matplotlib as mpl
-mpl.use('Agg')
 import pylab 	as pl
-import PIL.Image as im
+import Image 	as im
 import pyfits 	as pf
 import random	as rd
 
@@ -39,7 +37,7 @@ HEIGHT		= np.sqrt(2) * RADIUS + RIMPAD			# face-to-vertex (mm)
 N_ENV		= 1.00000					# environment refractive index
 N_CCR		= 1.45702					# CCR refractive index at desired frequency (here fused silica at 532 nm)
 DN_CCR		= 10.0e-6					# CCR refractive index temperature dependence
-SIZE		= 128						# linear pixel size of diffraction patterns
+SIZE		= 100						# linear pixel size of diffraction patterns
 LOD		= 14						# angular resolution (lambda / D)
 TIR		= True						# flag to enable TIR for uncoated CCR
 WAVELENGTH	= 632.8e-6					# wavelength of light (mm)
@@ -239,11 +237,8 @@ class Ray:
 		N = norm(np.dot(self.dir, surf.dir) * surf.dir)
 		
 		# get angles
-		angle = np.dot(self.dir, N)
-		if (angle >= 1 or angle <= 1):
-			t1 = 0
-		else:
-			t1    = np.arccos(np.dot(self.dir, N))		# angle of incidence
+		t1    = np.arccos(np.dot(self.dir, N))		# angle of incidence
+		if np.isnan(t1): t1 = 0
 		t2    = np.arcsin(n1 * np.sin(t1) / n2)		# angle of excitance
 
 		# refract direction
@@ -479,47 +474,40 @@ def ellipse(a, b, f, t):
 	y = b * np.sin(t - f) * np.cos(f) + a * np.cos(t - f) * np.sin(f)
 	return x, y
 
-def make_image(pixels, name, type, directory, invert = False, linearize = False):
+def make_image(pixels, name, type, invert = 0, directory = None):
 	'''Create a grayscale image from an array of values. The
 	type flag is used to set the type of images generated.
 	The invert flag is used	to invert the grayscale.  For 
 	example, inverted .PNG and .FITS images:
 
 	make_image(array, 'filename', 'fp', 1)'''
+	# get /Images/ directory
+	if directory is None:
+		directory = os.path.join(os.getcwd(), 'Images/')
+
 	# invert
 	if invert == 1: pixels = pixels.max() - pixels
 
 	# make fits
 	if 'f' in type:
 		if name + '.fits' in os.listdir(directory):
-			os.unlink(os.path.join(directory, name + '.fits'))
+			os.unlink(directory + name + '.fits')
 		hdu = pf.PrimaryHDU(np.flipud(pixels))
 		hdulist = pf.HDUList([hdu])
-		
-		hdulist.writeto(os.path.join(directory, name + '.fits'), clobber=True)
+		hdulist.writeto(directory + name + '.fits')
 
 	# scale to 0-255
 	pixels -= pixels.min()
-	m = pixels.max()
-	if m != 0:
-		pixels *= 255 / m
-	
-	# render in linear space
-	if linearize == 1:
-		pixels /= 255
-		pixels = 1 - pixels
-		pixels = np.power(pixels, 1/2.2)
-		pixels = 1 - pixels
-		pixels *= 255
+	pixels *= 255 / pixels.max()
 
 	# make rest
 	image = im.fromarray(np.uint8(pixels))
 	if 'g' in type:
-		image.save(os.path.join(directory, name + '.gif'))
+		image.save(directory + name + '.gif')
 	if 'p' in type:
-		image.save(os.path.join(directory, name + '.png'))
+		image.save(directory + name + '.png')
 	if 'e' in type:
-		image.save(os.path.join(directory, name + '.eps'))
+		image.save(directory + name + '.eps')
 
 def diffract(ap, wf):
 	'''Returns a diffraction array from an aperture array and

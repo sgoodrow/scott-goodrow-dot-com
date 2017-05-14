@@ -36,17 +36,16 @@ dTz		= 0.						# axial thermal gradient (K)
 argument = sys.argv
 num_args = len(argument)
 if num_args == 1:
-  print "Usage: %s b/a psi direc i az dTr dTz" % sys.argv[0]
-  print "	Param	Default	Description"
-  print "	b/a	0.0	minor-to-major axis ratio"
-  print "	psi	0.0	orientation of major axis relative to horizontal axis in units of degrees"
-  print "	direc	LH	LH or RH rotational sense, irrelevant for b/a = 0"
-  print "	i	0.0	the angle of incidence in units of degrees, beware angles beyond 17 degrees"
-  print "	az	0.0	azimuth of observer from x-axis in units of degrees"
-  print "	dTr	0.0	thermal gradiant from center to rim in units of Kelvin"
-  print "	dTz	0.0	thermal gradient from face to vertex in units of Kelvin"
-  print
-  print "Partial arguments okay; missing trailing arguments take defaults"
+  print "Usage: %s b/a psi(deg) direc(LH/RH) i(deg) az(deg) dTr(K) dTz(K)" % sys.argv[0]
+  print "\nDescription for each argument, with (default) values"
+  print "b/a is minor to major axis ratio (0.0 --> linear)"
+  print "psi is orientation of major axis rel. to horiz. (0.0); det. by az"
+  print "direc is LH or RH rotational sense (LH) irrel. for b/a = 0"
+  print "i is the angle off incidence (0.0).  Beware if i > 17 deg"
+  print "az is azimuth of observer from x-axis (0.0)"
+  print "dTr is thermal gradiant from center to rim (0.0)"
+  print "dTz is thermal gradient from face to vertex (0.0)"
+  print "\nPartial arguments okay; missing trailing arguments take defaults"
   sys.exit()
 if num_args > 1: b		= float(argument[1])
 if num_args > 2: f		= radians(float(argument[2]))
@@ -120,14 +119,7 @@ for num, path in enumerate(paths):
 	# plot ellipse
 	add_to_plot(ax, num, azimuth, ray)
 
-# ensure images directory exists
-directory_path = os.path.join(os.getcwd(), 'images/')
-directory = os.path.dirname(directory_path)
-if not os.path.exists(directory):
-	os.makedirs(directory)
-	
-# save ellipses
-pl.savefig(os.path.join(directory_path, 'ellipses.png'))
+pl.savefig(os.path.join(os.getcwd(), 'Images/') + 'Ellipse Plot.png')
 #===============================================================#
 
 #===================== DIFFRACTION PATTERN =====================#
@@ -179,21 +171,19 @@ df_tot = df_hor + df_ver
 # get flux in first airy ring
 outf = ((ap_hor**2).sum() + (ap_ver**2).sum()) * (SIZE * LOD)**2
 airy = flux(df_tot, [SIZE / 2, SIZE / 2], 1.22 * LOD) / outf * 100
-print
-print "Results:"
-print "	% 0.2f	airy ring flux"	% (airy)
-print "	% 0.2f	central irradiance" 	% (df_tot.max() / outf * 100)
+print "Airy Ring: % 6.2f%%" % (airy)
+print "Cent. Irr: % 6.2f%%" % (df_tot.max() / outf * 100)
 #===============================================================#
 
 #======================= Draw Images ===========================#
-make_image(thermal, 'thermal', 'fp', directory)
-make_image(ap_hor, 'ap_hor', 'fp', directory)
-make_image(ap_ver, 'ap_ver', 'fp', directory)
-make_image(wf_hor, 'wf_hor', 'fp', directory)
-make_image(wf_ver, 'wf_ver', 'fp', directory)
-make_image(df_hor, 'df_hor', 'fp', directory, invert = True, linearize = False)
-make_image(df_ver, 'df_ver', 'fp', directory, invert = True, linearize = False)
-make_image(df_tot, 'df_tot', 'fp', directory, invert = True, linearize = False)
+make_image(thermal, 'thermal', 'fp')
+make_image(ap_hor, 'ap_hor', 'fp')
+make_image(ap_ver, 'ap_ver', 'fp')
+make_image(wf_hor, 'wf_hor', 'fp')
+make_image(wf_ver, 'wf_ver', 'fp')
+make_image(df_hor, 'df_hor', 'fp')
+make_image(df_ver, 'df_ver', 'fp')
+make_image(df_tot, 'df_tot', 'fp')
 #===============================================================#</code></pre>
 </body>
 
